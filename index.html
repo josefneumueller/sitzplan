@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitzplan & Gruppen PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #357ABD;
+        }
+        .grid-container {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .seat {
+            background-color: #e0e0e0;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .seat.occupied {
+            background-color: #d4edda;
+            border: 2px solid #28a745;
+            font-weight: bold;
+        }
+        .group-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffeeba;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏫 Unterrichts-Manager</h1>
+
+    <div class="card">
+        <h3>1. Schülerliste</h3>
+        <textarea id="studentList" rows="4" style="width: 100%;" placeholder="Namen kommagetrennt eingeben (z.B. Anna, Ben, Clara)"></textarea>
+    </div>
+
+    <div class="card">
+        <h3>2. Sitzplan generieren</h3>
+        <label>Reihen: <input type="number" id="rows" value="4" min="1"></label>
+        <label>Spalten: <input type="number" id="cols" value="4" min="1"></label>
+        <br>
+        <button onclick="generateSeating()">🎲 Sitzplan zufällig anordnen</button>
+        <div id="classroom" class="grid-container"></div>
+    </div>
+
+    <div class="card">
+        <h3>3. Gruppen bilden</h3>
+        <label>Gruppengröße: <input type="number" id="groupSize" value="3" min="2"></label>
+        <br>
+        <button onclick="generateGroups()">👥 Zufällige Gruppen erstellen</button>
+        <div id="groupsContainer"></div>
+    </div>
+</div>
+
+<script>
+    // Hilfsfunktion zum Mischen eines Arrays (Fisher-Yates Algorithmus)
+    function shuffleArray(array) {
+        let curId = array.length;
+        while (0 !== curId) {
+            let randId = Math.floor(Math.random() * curId);
+            curId -= 1;
+            let tmp = array[curId];
+            array[curId] = array[randId];
+            array[randId] = tmp;
+        }
+        return array;
+    }
+
+    function getStudents() {
+        const text = document.getElementById('studentList').value;
+        if (!text) return [];
+        return text.split(',').map(s => s.trim()).filter(s => s !== "");
+    }
+
+    function generateSeating() {
+        const students = getStudents();
+        const rows = parseInt(document.getElementById('rows').value);
+        const cols = parseInt(document.getElementById('cols').value);
+        const classroom = document.getElementById('classroom');
+        
+        classroom.innerHTML = '';
+        classroom.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+        let shuffled = shuffleArray([...students]);
+        let totalSeats = rows * cols;
+
+        for(let i = 0; i < totalSeats; i++) {
+            let seat = document.createElement('div');
+            seat.className = 'seat';
+            
+            if(i < shuffled.length) {
+                seat.textContent = shuffled[i];
+                seat.classList.add('occupied');
+            } else {
+                seat.textContent = "Leer";
+            }
+            classroom.appendChild(seat);
+        }
+    }
+
+    function generateGroups() {
+        const students = getStudents();
+        const groupSize = parseInt(document.getElementById('groupSize').value);
+        const container = document.getElementById('groupsContainer');
+        
+        container.innerHTML = '';
+        let shuffled = shuffleArray([...students]);
+        
+        for (let i = 0; i < shuffled.length; i += groupSize) {
+            let group = shuffled.slice(i, i + groupSize);
+            let groupDiv = document.createElement('div');
+            groupDiv.className = 'group-box';
+            groupDiv.innerHTML = `<strong>Gruppe ${(i / groupSize) + 1}:</strong> ${group.join(' • ')}`;
+            container.appendChild(groupDiv);
+        }
+    }
+
+    // Service Worker für Offline-Funktionalität registrieren
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(() => console.log("Service Worker registriert!"))
+            .catch(err => console.error("Service Worker Fehler:", err));
+    }
+</script>
+</body>
+</html>
