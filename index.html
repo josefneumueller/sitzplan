@@ -3,175 +3,486 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sitzplan & Gruppen PWA</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Sitzplangenerator</title>
     <style>
         :root {
-            --primary: #4A90E2;
-            --bg: #f4f7f6;
-            --card-bg: #ffffff;
-            --text: #333;
+            --sidebar-bg-top: #2b4b60;
+            --sidebar-bg-bottom: #475a75;
+            --footer-bg: #873e7d;
+            --grid-border: #eaeaea;
+            --text-light: #ffffff;
+            --text-dark: #333333;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #ffffff;
         }
-        .card {
-            background: var(--card-bg);
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 320px;
+            background: linear-gradient(180deg, var(--sidebar-bg-top) 0%, var(--sidebar-bg-bottom) 100%);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 400;
+        }
+
+        .input-group {
             margin-bottom: 20px;
         }
-        input, button {
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+
+        .input-group label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
         }
-        button {
-            background-color: var(--primary);
+
+        .input-group input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.6);
             color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
+            padding: 8px 10px;
+            border-radius: 4px;
+            outline: none;
         }
-        button:hover {
-            background-color: #357ABD;
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
         }
-        .grid-container {
-            display: grid;
+
+        .hint-text {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+
+        .student-input-wrapper {
+            display: flex;
             gap: 10px;
-            margin-top: 20px;
+            align-items: center;
         }
-        .seat {
-            background-color: #e0e0e0;
-            padding: 20px;
-            text-align: center;
-            border-radius: 8px;
-            min-height: 50px;
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .student-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .student-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-footer-links {
+            margin-top: auto;
+            font-size: 0.8rem;
+            line-height: 1.8;
+        }
+
+        .sidebar-footer-links a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .top-bar {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar h2 {
+            color: #3b7482;
+            font-weight: 300;
+            font-size: 1.8rem;
+        }
+
+        /* --- GRID (SITZPLAN) --- */
+        .grid-wrapper {
+            flex-grow: 1;
+            padding: 0 40px 20px 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .seat.occupied {
-            background-color: #d4edda;
-            border: 2px solid #28a745;
-            font-weight: bold;
+
+        .seating-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr); /* 10 Spalten */
+            grid-template-rows: repeat(7, 1fr);    /* 7 Reihen */
+            width: 100%;
+            height: 100%;
+            max-height: 600px;
+            border-top: 1px solid var(--grid-border);
+            border-left: 1px solid var(--grid-border);
         }
-        .group-box {
-            background: #fff3cd;
-            border-left: 5px solid #ffeeba;
-            padding: 10px;
-            margin-top: 10px;
+
+        .grid-cell {
+            border-right: 1px solid var(--grid-border);
+            border-bottom: 1px solid var(--grid-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Dropzone Hover-Effekt */
+        .grid-cell.drag-over {
+            background-color: #f0f8ff;
+        }
+
+        /* --- DRAGGABLE STUDENT CARD --- */
+        .student-card {
+            background: white;
+            border: 1px solid #ccc;
             border-radius: 4px;
+            padding: 8px;
+            width: 80%;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            user-select: none;
+            z-index: 10;
+        }
+
+        .student-card:active {
+            cursor: grabbing;
+        }
+
+        /* --- FOOTER --- */
+        .main-footer {
+            background-color: var(--footer-bg);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .footer-buttons button {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .footer-buttons button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>🏫 Unterrichts-Manager</h1>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <span style="font-size: 1.5rem;">🏠</span>
+            <h1>Sitzplangenerator</h1>
+        </div>
 
-    <div class="card">
-        <h3>1. Schülerliste</h3>
-        <textarea id="studentList" rows="4" style="width: 100%;" placeholder="Namen kommagetrennt eingeben (z.B. Anna, Ben, Clara)"></textarea>
-    </div>
+        <div class="input-group">
+            <label>Klasse</label>
+            <input type="text" placeholder="z.B. 8C" id="classNameInput">
+            <div class="hint-text">Die Klasse oder Raumnummer ist optional, um dem Sitzplan einen Namen zu geben.</div>
+        </div>
 
-    <div class="card">
-        <h3>2. Sitzplan generieren</h3>
-        <label>Reihen: <input type="number" id="rows" value="4" min="1"></label>
-        <label>Spalten: <input type="number" id="cols" value="4" min="1"></label>
-        <br>
-        <button onclick="generateSeating()">🎲 Sitzplan zufällig anordnen</button>
-        <div id="classroom" class="grid-container"></div>
-    </div>
+        <div class="input-group">
+            <div style="display: flex; justify-content: space-between;">
+                <label>Schüler</label>
+                <label style="font-size: 0.7rem" id="studentCount">0 Schüler</label>
+            </div>
+            <div class="student-input-wrapper">
+                <input type="text" id="studentInput" placeholder="Neuen Namen eingeben...">
+                <button class="icon-btn" onclick="addStudent()">+</button>
+            </div>
+            <div class="hint-text">Drücke "Enter", um den Namen zur Liste hinzuzufügen.</div>
+        </div>
 
-    <div class="card">
-        <h3>3. Gruppen bilden</h3>
-        <label>Gruppengröße: <input type="number" id="groupSize" value="3" min="2"></label>
-        <br>
-        <button onclick="generateGroups()">👥 Zufällige Gruppen erstellen</button>
-        <div id="groupsContainer"></div>
-    </div>
-</div>
+        <div class="student-list" id="sidebarStudentList">
+            </div>
 
-<script>
-    // Hilfsfunktion zum Mischen eines Arrays (Fisher-Yates Algorithmus)
-    function shuffleArray(array) {
-        let curId = array.length;
-        while (0 !== curId) {
-            let randId = Math.floor(Math.random() * curId);
-            curId -= 1;
-            let tmp = array[curId];
-            array[curId] = array[randId];
-            array[randId] = tmp;
-        }
-        return array;
-    }
+        <div class="sidebar-footer-links">
+            <a href="#">❯ Klassenliste importieren</a>
+            <a href="#">❯ Vorlage verwenden</a>
+            <a href="#">❯ Schüler/Gruppen auslosen</a>
+        </div>
+    </aside>
 
-    function getStudents() {
-        const text = document.getElementById('studentList').value;
-        if (!text) return [];
-        return text.split(',').map(s => s.trim()).filter(s => s !== "");
-    }
+    <main class="main-area">
+        <div class="top-bar">
+            <h2 id="planTitle">Sitzplan</h2>
+            <div>
+                <span style="font-size: 1.5rem; color: #3b7482; cursor: pointer;">📋</span>
+            </div>
+        </div>
 
-    function generateSeating() {
-        const students = getStudents();
-        const rows = parseInt(document.getElementById('rows').value);
-        const cols = parseInt(document.getElementById('cols').value);
-        const classroom = document.getElementById('classroom');
-        
-        classroom.innerHTML = '';
-        classroom.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        <div class="grid-wrapper">
+            <div class="seating-grid" id="seatingGrid">
+                </div>
+        </div>
 
-        let shuffled = shuffleArray([...students]);
-        let totalSeats = rows * cols;
+        <footer class="main-footer">
+            <div class="footer-buttons">
+                <button onclick="randomizeSeats()">Losen</button>
+                <button onclick="window.print()">Drucken</button>
+            </div>
+            <div class="footer-links">
+                <a href="#">Impressum</a> | 
+                <a href="#">Haftungsausschluss</a> | 
+                <a href="#">Datenschutzerklärung</a> | 
+                <a href="#">Unterstützen</a>
+            </div>
+        </footer>
+    </main>
 
-        for(let i = 0; i < totalSeats; i++) {
-            let seat = document.createElement('div');
-            seat.className = 'seat';
-            
-            if(i < shuffled.length) {
-                seat.textContent = shuffled[i];
-                seat.classList.add('occupied');
-            } else {
-                seat.textContent = "Leer";
+    <script>
+        const studentInput = document.getElementById('studentInput');
+        const sidebarList = document.getElementById('sidebarStudentList');
+        const grid = document.getElementById('seatingGrid');
+        const countLabel = document.getElementById('studentCount');
+        const classNameInput = document.getElementById('classNameInput');
+        const planTitle = document.getElementById('planTitle');
+
+        let students = [];
+        let draggedCard = null;
+
+        // 1. Grid initialisieren (10x7 = 70 Plätze)
+        function initGrid() {
+            grid.innerHTML = '';
+            for (let i = 0; i < 70; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                cell.dataset.index = i;
+                
+                // Drag & Drop Event Listener für jede Zelle
+                cell.addEventListener('dragover', dragOver);
+                cell.addEventListener('dragenter', dragEnter);
+                cell.addEventListener('dragleave', dragLeave);
+                cell.addEventListener('drop', drop);
+                
+                grid.appendChild(cell);
             }
-            classroom.appendChild(seat);
         }
-    }
 
-    function generateGroups() {
-        const students = getStudents();
-        const groupSize = parseInt(document.getElementById('groupSize').value);
-        const container = document.getElementById('groupsContainer');
-        
-        container.innerHTML = '';
-        let shuffled = shuffleArray([...students]);
-        
-        for (let i = 0; i < shuffled.length; i += groupSize) {
-            let group = shuffled.slice(i, i + groupSize);
-            let groupDiv = document.createElement('div');
-            groupDiv.className = 'group-box';
-            groupDiv.innerHTML = `<strong>Gruppe ${(i / groupSize) + 1}:</strong> ${group.join(' • ')}`;
-            container.appendChild(groupDiv);
+        // 2. Schüler hinzufügen
+        function addStudent() {
+            const name = studentInput.value.trim();
+            if (name === '') return;
+
+            const id = 'student-' + Date.now();
+            students.push({ id, name });
+
+            // In Sidebar rendern
+            renderSidebarItem(id, name);
+
+            // Als Karte in die erste freie Grid-Zelle setzen
+            createDraggableCard(id, name);
+
+            studentInput.value = '';
+            updateCount();
         }
-    }
 
-    // Service Worker für Offline-Funktionalität registrieren
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(() => console.log("Service Worker registriert!"))
-            .catch(err => console.error("Service Worker Fehler:", err));
-    }
-</script>
+        // Bei Enter-Taste auslösen
+        studentInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') addStudent();
+        });
+
+        // Titel live updaten
+        classNameInput.addEventListener('input', function(e) {
+            planTitle.innerText = e.target.value ? `Sitzplan - ${e.target.value}` : 'Sitzplan';
+        });
+
+        function renderSidebarItem(id, name) {
+            const div = document.createElement('div');
+            div.classList.add('student-list-item');
+            div.id = 'sidebar-' + id;
+            div.innerHTML = `
+                <span>${name}</span>
+                <button class="icon-btn" style="width: 24px; height: 24px; font-size: 1rem; line-height: 0;" onclick="removeStudent('${id}')">-</button>
+            `;
+            sidebarList.appendChild(div);
+        }
+
+        function createDraggableCard(id, name) {
+            const card = document.createElement('div');
+            card.classList.add('student-card');
+            card.draggable = true;
+            card.innerText = name;
+            card.id = 'card-' + id;
+
+            // Drag Events
+            card.addEventListener('dragstart', dragStart);
+            card.addEventListener('dragend', dragEnd);
+
+            // Finde erste leere Zelle
+            const cells = document.querySelectorAll('.grid-cell');
+            for (let cell of cells) {
+                if (cell.children.length === 0) {
+                    cell.appendChild(card);
+                    break;
+                }
+            }
+        }
+
+        // 3. Schüler entfernen
+        function removeStudent(id) {
+            // Aus Array entfernen
+            students = students.filter(s => s.id !== id);
+            
+            // Aus Sidebar entfernen
+            const sidebarItem = document.getElementById('sidebar-' + id);
+            if (sidebarItem) sidebarItem.remove();
+
+            // Aus Grid entfernen
+            const card = document.getElementById('card-' + id);
+            if (card) card.remove();
+
+            updateCount();
+        }
+
+        function updateCount() {
+            countLabel.innerText = `${students.length} Schüler`;
+        }
+
+        // 4. Drag & Drop Logik
+        function dragStart(e) {
+            draggedCard = this;
+            setTimeout(() => this.style.opacity = '0.5', 0);
+        }
+
+        function dragEnd() {
+            setTimeout(() => this.style.opacity = '1', 0);
+            draggedCard = null;
+        }
+
+        function dragOver(e) {
+            e.preventDefault(); // Erlaubt das Droppen
+        }
+
+        function dragEnter(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        }
+
+        function dragLeave() {
+            this.classList.remove('drag-over');
+        }
+
+        function drop() {
+            this.classList.remove('drag-over');
+            
+            // Wenn die Zelle schon einen Schüler hat, tauschen wir die Plätze!
+            if (this.children.length > 0) {
+                const existingCard = this.children[0];
+                const originCell = draggedCard.parentElement;
+                originCell.appendChild(existingCard); // Schiebe alten Schüler an Ursprungsort
+            }
+            
+            this.appendChild(draggedCard); // Setze neuen Schüler in diese Zelle
+        }
+
+        // 5. Losen (Zufällige Verteilung)
+        function randomizeSeats() {
+            if (students.length === 0) return;
+
+            // Sammle alle aktuellen Karten ein
+            const allCards = Array.from(document.querySelectorAll('.student-card'));
+            
+            // Leere alle Zellen
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach(cell => cell.innerHTML = '');
+
+            // Karten mischen (Fisher-Yates)
+            for (let i = allCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
+            }
+
+            // Zufällige, eindeutige Zellenindizes generieren
+            let availableIndices = Array.from(Array(70).keys());
+            
+            allCards.forEach(card => {
+                const randomPos = Math.floor(Math.random() * availableIndices.length);
+                const cellIndex = availableIndices.splice(randomPos, 1)[0];
+                cells[cellIndex].appendChild(card);
+            });
+        }
+
+        // App Start
+        initGrid();
+
+    </script>
 </body>
 </html>
