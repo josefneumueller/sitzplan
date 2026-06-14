@@ -8,7 +8,7 @@
   "description": "Ein lokaler Sitzplan- und Gruppengenerator für Lehrer.",
   "icons": [
     {
-      "src": "icons/dollar.png",
+      "src": "icons/school.png",
       "sizes": "225x225",
        "type": "image/png"
     }
