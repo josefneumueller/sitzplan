@@ -6,12 +6,14 @@
     <title>Sitzplangenerator</title>
     <style>
         :root {
-            --sidebar-bg-top: #2b4b60;
-            --sidebar-bg-bottom: #475a75;
-            --footer-bg: #873e7d;
+            /* Neues Grün-Theme */
+            --sidebar-bg-top: #0f3e21;
+            --sidebar-bg-bottom: #277a41;
+            --footer-bg: #1b5e20;
             --grid-border: #eaeaea;
             --text-light: #ffffff;
             --text-dark: #333333;
+            --accent: #4caf50;
         }
 
         * {
@@ -128,12 +130,20 @@
             margin-top: auto;
             font-size: 0.8rem;
             line-height: 1.8;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 10px;
         }
 
         .sidebar-footer-links a {
             color: white;
             text-decoration: none;
             display: block;
+            padding: 5px 0;
+        }
+
+        .sidebar-footer-links a:hover {
+            color: #e8f5e9;
+            text-decoration: underline;
         }
 
         /* --- MAIN CONTENT --- */
@@ -152,7 +162,7 @@
         }
 
         .top-bar h2 {
-            color: #3b7482;
+            color: var(--sidebar-bg-bottom);
             font-weight: 300;
             font-size: 1.8rem;
         }
@@ -168,8 +178,8 @@
 
         .seating-grid {
             display: grid;
-            grid-template-columns: repeat(10, 1fr); /* 10 Spalten */
-            grid-template-rows: repeat(7, 1fr);    /* 7 Reihen */
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(7, 1fr);
             width: 100%;
             height: 100%;
             max-height: 600px;
@@ -186,9 +196,8 @@
             position: relative;
         }
 
-        /* Dropzone Hover-Effekt */
         .grid-cell.drag-over {
-            background-color: #f0f8ff;
+            background-color: #e8f5e9; /* Leichtes Grün bei Drag & Drop */
         }
 
         /* --- DRAGGABLE STUDENT CARD --- */
@@ -216,7 +225,7 @@
             background-color: var(--footer-bg);
             padding: 15px 40px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             color: white;
             font-size: 0.8rem;
@@ -237,10 +246,57 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-        .footer-links a {
+        /* --- MODAL (AUSLOSEN) --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            color: var(--text-dark);
+            min-width: 300px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h2 {
+            font-weight: 300;
+            color: var(--sidebar-bg-bottom);
+            margin-bottom: 15px;
+        }
+
+        .modal-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+        }
+
+        .modal-content button {
+            background: var(--sidebar-bg-bottom);
             color: white;
-            text-decoration: none;
-            margin-left: 10px;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background: var(--sidebar-bg-top);
+        }
+
+        /* Print Layout */
+        @media print {
+            .sidebar, .main-footer, .top-bar span { display: none !important; }
+            .main-area { width: 100vw; height: 100vh; }
+            .grid-wrapper { padding: 0; }
         }
     </style>
 </head>
@@ -248,14 +304,14 @@
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            <span style="font-size: 1.5rem;">🏠</span>
+            <span style="font-size: 1.5rem;">🏫</span>
             <h1>Sitzplangenerator</h1>
         </div>
 
         <div class="input-group">
             <label>Klasse</label>
             <input type="text" placeholder="z.B. 8C" id="classNameInput">
-            <div class="hint-text">Die Klasse oder Raumnummer ist optional, um dem Sitzplan einen Namen zu geben.</div>
+            <div class="hint-text">Optional, um dem Sitzplan einen Namen zu geben.</div>
         </div>
 
         <div class="input-group">
@@ -265,7 +321,7 @@
             </div>
             <div class="student-input-wrapper">
                 <input type="text" id="studentInput" placeholder="Neuen Namen eingeben...">
-                <button class="icon-btn" onclick="addStudent()">+</button>
+                <button class="icon-btn" onclick="addStudentFromInput()">+</button>
             </div>
             <div class="hint-text">Drücke "Enter", um den Namen zur Liste hinzuzufügen.</div>
         </div>
@@ -274,9 +330,10 @@
             </div>
 
         <div class="sidebar-footer-links">
-            <a href="#">❯ Klassenliste importieren</a>
-            <a href="#">❯ Vorlage verwenden</a>
-            <a href="#">❯ Schüler/Gruppen auslosen</a>
+            <a href="#" id="btnImport">❯ Klassenliste importieren</a>
+            <input type="file" id="fileInput" accept=".txt,.csv" style="display: none;">
+            <a href="#" id="btnTemplate">❯ Vorlage verwenden</a>
+            <a href="#" id="btnDraw">❯ Schüler auslosen</a>
         </div>
     </aside>
 
@@ -284,7 +341,7 @@
         <div class="top-bar">
             <h2 id="planTitle">Sitzplan</h2>
             <div>
-                <span style="font-size: 1.5rem; color: #3b7482; cursor: pointer;">📋</span>
+                <span style="font-size: 1.5rem; color: var(--sidebar-bg-bottom); cursor: pointer;" onclick="window.print()" title="Drucken">🖨️</span>
             </div>
         </div>
 
@@ -298,14 +355,16 @@
                 <button onclick="randomizeSeats()">Losen</button>
                 <button onclick="window.print()">Drucken</button>
             </div>
-            <div class="footer-links">
-                <a href="#">Impressum</a> | 
-                <a href="#">Haftungsausschluss</a> | 
-                <a href="#">Datenschutzerklärung</a> | 
-                <a href="#">Unterstützen</a>
-            </div>
         </footer>
     </main>
+
+    <div id="drawModal" class="modal">
+        <div class="modal-content">
+            <h2>🎲 Zufallsgenerator</h2>
+            <h1 id="drawnName">Name</h1>
+            <button onclick="closeModal()">Weiter</button>
+        </div>
+    </div>
 
     <script>
         const studentInput = document.getElementById('studentInput');
@@ -314,6 +373,7 @@
         const countLabel = document.getElementById('studentCount');
         const classNameInput = document.getElementById('classNameInput');
         const planTitle = document.getElementById('planTitle');
+        const fileInput = document.getElementById('fileInput');
 
         let students = [];
         let draggedCard = null;
@@ -326,7 +386,6 @@
                 cell.classList.add('grid-cell');
                 cell.dataset.index = i;
                 
-                // Drag & Drop Event Listener für jede Zelle
                 cell.addEventListener('dragover', dragOver);
                 cell.addEventListener('dragenter', dragEnter);
                 cell.addEventListener('dragleave', dragLeave);
@@ -336,30 +395,28 @@
             }
         }
 
-        // 2. Schüler hinzufügen
-        function addStudent() {
-            const name = studentInput.value.trim();
-            if (name === '') return;
-
-            const id = 'student-' + Date.now();
-            students.push({ id, name });
-
-            // In Sidebar rendern
-            renderSidebarItem(id, name);
-
-            // Als Karte in die erste freie Grid-Zelle setzen
-            createDraggableCard(id, name);
-
-            studentInput.value = '';
+        // 2. Schüler Logik
+        function addStudentByName(name) {
+            if (!name || name.trim() === '') return;
+            const cleanName = name.trim();
+            const id = 'student-' + Date.now() + Math.floor(Math.random() * 1000);
+            
+            students.push({ id, name: cleanName });
+            renderSidebarItem(id, cleanName);
+            createDraggableCard(id, cleanName);
             updateCount();
         }
 
-        // Bei Enter-Taste auslösen
+        function addStudentFromInput() {
+            addStudentByName(studentInput.value);
+            studentInput.value = ''; // Feld leeren
+            studentInput.focus();
+        }
+
         studentInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') addStudent();
+            if (e.key === 'Enter') addStudentFromInput();
         });
 
-        // Titel live updaten
         classNameInput.addEventListener('input', function(e) {
             planTitle.innerText = e.target.value ? `Sitzplan - ${e.target.value}` : 'Sitzplan';
         });
@@ -382,7 +439,6 @@
             card.innerText = name;
             card.id = 'card-' + id;
 
-            // Drag Events
             card.addEventListener('dragstart', dragStart);
             card.addEventListener('dragend', dragEnd);
 
@@ -396,27 +452,20 @@
             }
         }
 
-        // 3. Schüler entfernen
         function removeStudent(id) {
-            // Aus Array entfernen
             students = students.filter(s => s.id !== id);
-            
-            // Aus Sidebar entfernen
             const sidebarItem = document.getElementById('sidebar-' + id);
             if (sidebarItem) sidebarItem.remove();
-
-            // Aus Grid entfernen
             const card = document.getElementById('card-' + id);
             if (card) card.remove();
-
             updateCount();
         }
 
         function updateCount() {
-            countLabel.innerText = `${students.length} Schüler`;
+            countLabel.innerText = `${students.length} Schüler${students.length === 1 ? '' : ''}`;
         }
 
-        // 4. Drag & Drop Logik
+        // 3. Drag & Drop Logik
         function dragStart(e) {
             draggedCard = this;
             setTimeout(() => this.style.opacity = '0.5', 0);
@@ -427,57 +476,99 @@
             draggedCard = null;
         }
 
-        function dragOver(e) {
-            e.preventDefault(); // Erlaubt das Droppen
-        }
-
-        function dragEnter(e) {
-            e.preventDefault();
-            this.classList.add('drag-over');
-        }
-
-        function dragLeave() {
-            this.classList.remove('drag-over');
-        }
+        function dragOver(e) { e.preventDefault(); }
+        function dragEnter(e) { e.preventDefault(); this.classList.add('drag-over'); }
+        function dragLeave() { this.classList.remove('drag-over'); }
 
         function drop() {
             this.classList.remove('drag-over');
-            
-            // Wenn die Zelle schon einen Schüler hat, tauschen wir die Plätze!
             if (this.children.length > 0) {
                 const existingCard = this.children[0];
                 const originCell = draggedCard.parentElement;
-                originCell.appendChild(existingCard); // Schiebe alten Schüler an Ursprungsort
+                originCell.appendChild(existingCard); // Platztausch
             }
-            
-            this.appendChild(draggedCard); // Setze neuen Schüler in diese Zelle
+            this.appendChild(draggedCard);
         }
 
-        // 5. Losen (Zufällige Verteilung)
+        // 4. Losen (Sitzplan)
         function randomizeSeats() {
             if (students.length === 0) return;
-
-            // Sammle alle aktuellen Karten ein
             const allCards = Array.from(document.querySelectorAll('.student-card'));
-            
-            // Leere alle Zellen
             const cells = document.querySelectorAll('.grid-cell');
             cells.forEach(cell => cell.innerHTML = '');
 
-            // Karten mischen (Fisher-Yates)
+            // Mischen (Fisher-Yates)
             for (let i = allCards.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
             }
 
-            // Zufällige, eindeutige Zellenindizes generieren
             let availableIndices = Array.from(Array(70).keys());
-            
             allCards.forEach(card => {
                 const randomPos = Math.floor(Math.random() * availableIndices.length);
                 const cellIndex = availableIndices.splice(randomPos, 1)[0];
                 cells[cellIndex].appendChild(card);
             });
+        }
+
+        // 5. ERWEITERTE FUNKTIONEN (Sidebar-Links)
+
+        // a) Datei importieren
+        document.getElementById('btnImport').addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const text = evt.target.result;
+                // Trennt bei Komma ODER Zeilenumbruch
+                const names = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+                names.forEach(n => addStudentByName(n));
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Reset Input
+        });
+
+        // b) Vorlage verwenden
+        document.getElementById('btnTemplate').addEventListener('click', (e) => {
+            e.preventDefault();
+            const templateNames = ["Anna", "Ben", "Clara", "David", "Emma", "Felix", "Greta", "Hans", "Ida", "Jan", "Klara", "Leo", "Mia", "Noah", "Olivia", "Paul"];
+            
+            // Vorher aufräumen
+            students.forEach(s => {
+                const card = document.getElementById('card-' + s.id);
+                if(card) card.remove();
+            });
+            sidebarList.innerHTML = '';
+            students = [];
+            
+            templateNames.forEach(n => addStudentByName(n));
+            randomizeSeats(); // Direkt mischen
+            classNameInput.value = "8C (Vorlage)";
+            planTitle.innerText = "Sitzplan - 8C (Vorlage)";
+        });
+
+        // c) Schüler auslosen
+        document.getElementById('btnDraw').addEventListener('click', (e) => {
+            e.preventDefault();
+            if(students.length === 0) {
+                alert("Bitte zuerst Schüler hinzufügen!");
+                return;
+            }
+            const randomIndex = Math.floor(Math.random() * students.length);
+            const chosenStudent = students[randomIndex].name;
+            
+            document.getElementById('drawnName').innerText = chosenStudent;
+            document.getElementById('drawModal').style.display = 'flex';
+        });
+
+        function closeModal() {
+            document.getElementById('drawModal').style.display = 'none';
         }
 
         // App Start
