@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sitzplangenerator</title>
+    <title>Erweiterter Sitzplangenerator</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
-            /* Neues Grün-Theme */
             --sidebar-bg-top: #0f3e21;
             --sidebar-bg-bottom: #277a41;
             --footer-bg: #1b5e20;
@@ -15,289 +14,123 @@
             --text-light: #ffffff;
             --text-dark: #333333;
             --accent: #4caf50;
+            --group-color: #ff9800;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            background-color: #ffffff;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; height: 100vh; overflow: hidden; background-color: #ffffff; }
 
         /* --- SIDEBAR --- */
         .sidebar {
-            width: 320px;
+            width: 340px;
             background: linear-gradient(180deg, var(--sidebar-bg-top) 0%, var(--sidebar-bg-bottom) 100%);
             color: var(--text-light);
             display: flex;
             flex-direction: column;
             padding: 20px;
             flex-shrink: 0;
-        }
-
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .sidebar-header h1 {
-            font-size: 1.4rem;
-            font-weight: 400;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-        }
-
-        .input-group input {
-            width: 100%;
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            color: white;
-            padding: 8px 10px;
-            border-radius: 4px;
-            outline: none;
-        }
-
-        .input-group input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .hint-text {
-            font-size: 0.7rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 5px;
-        }
-
-        .student-input-wrapper {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .icon-btn {
-            background: transparent;
-            border: 1px solid white;
-            color: white;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .icon-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .student-list {
-            flex-grow: 1;
             overflow-y: auto;
-            margin-top: 10px;
         }
 
+        .sidebar-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .sidebar-header h1 { font-size: 1.4rem; font-weight: 400; }
+        
+        .section-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; color: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; margin-top: 15px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; }
+        .input-group input[type="text"], .input-group input[type="number"], .input-group select {
+            width: 100%; background: transparent; border: 1px solid rgba(255, 255, 255, 0.6); color: white; padding: 8px 10px; border-radius: 4px; outline: none;
+        }
+        .input-group input::placeholder { color: rgba(255, 255, 255, 0.6); }
+        .input-group select option { background: var(--sidebar-bg-bottom); color: white; }
+
+        .flex-row { display: flex; gap: 10px; align-items: center; }
+        
+        .icon-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid white; color: white; border-radius: 4px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .student-list { flex-grow: 1; overflow-y: auto; max-height: 150px; margin-bottom: 10px; }
         .student-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 6px 10px;
-            border-radius: 4px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
+            display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); padding: 6px 10px; border-radius: 4px; margin-bottom: 5px; font-size: 0.9rem;
         }
 
-        .sidebar-footer-links {
-            margin-top: auto;
-            font-size: 0.8rem;
-            line-height: 1.8;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 10px;
+        .tools-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .tool-item {
+            background: rgba(255,255,255,0.1); border: 1px dashed white; padding: 8px; border-radius: 4px; cursor: grab; font-size: 0.8rem; text-align: center; flex: 1; min-width: 80px;
         }
 
-        .sidebar-footer-links a {
-            color: white;
-            text-decoration: none;
-            display: block;
-            padding: 5px 0;
-        }
+        .action-links a { color: white; text-decoration: none; display: block; padding: 6px 0; font-size: 0.9rem; }
+        .action-links a:hover { color: #e8f5e9; text-decoration: underline; }
 
-        .sidebar-footer-links a:hover {
-            color: #e8f5e9;
-            text-decoration: underline;
-        }
+        /* Toggle Switch */
+        .toggle-wrapper { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; margin-bottom: 10px; }
+        .toggle-switch { position: relative; width: 40px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.3); transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         /* --- MAIN CONTENT --- */
-        .main-area {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
+        .main-area { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
+        .top-bar { padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--grid-border); }
+        .top-bar h2 { color: var(--sidebar-bg-bottom); font-weight: 300; font-size: 1.8rem; }
 
-        .top-bar {
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .top-bar h2 {
-            color: var(--sidebar-bg-bottom);
-            font-weight: 300;
-            font-size: 1.8rem;
-        }
-
-        /* --- GRID (SITZPLAN) --- */
-        .grid-wrapper {
-            flex-grow: 1;
-            padding: 0 40px 20px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+        /* --- GRID --- */
+        .grid-wrapper { flex-grow: 1; padding: 20px; overflow: auto; display: flex; align-items: flex-start; justify-content: center; background: #f9f9f9; }
         .seating-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(7, 1fr);
-            width: 100%;
-            height: 100%;
-            max-height: 600px;
-            border-top: 1px solid var(--grid-border);
-            border-left: 1px solid var(--grid-border);
+            display: grid; gap: 5px; width: 100%; height: 100%; max-width: 1000px; max-height: 700px;
         }
-
         .grid-cell {
-            border-right: 1px solid var(--grid-border);
-            border-bottom: 1px solid var(--grid-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            background: white; border: 1px solid var(--grid-border); border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+        .grid-cell.drag-over { background-color: #e8f5e9; border: 2px dashed var(--accent); }
+        
+        .grid-cell.is-window { background-color: #e3f2fd; border-right: 6px solid #64b5f6; }
+        .grid-cell.is-window::before { content: '🪟 Fenster'; position: absolute; font-size: 0.7rem; color: #1976d2; opacity: 0.5; }
 
-        .grid-cell.drag-over {
-            background-color: #e8f5e9; /* Leichtes Grün bei Drag & Drop */
+        /* --- DRAGGABLE CARDS --- */
+        .card {
+            border-radius: 6px; width: 90%; height: 90%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: grab; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            user-select: none; z-index: 10; font-size: 0.85rem; font-weight: bold; text-align: center; padding: 4px;
+            transition: border 0.2s;
         }
+        .card:active { cursor: grabbing; }
+        
+        .student-card { background: white; border: 1px solid #ccc; color: var(--text-dark); }
+        .student-card[data-group] { border: 2px solid var(--group-color); } /* Hervorhebung für gruppierte Schüler */
+        
+        .student-card img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; border: 1px solid #ccc; }
+        
+        .room-card { color: white; font-size: 0.8rem; }
+        
+        /* Modifizierte Tafel: Bruchteil des Feldes, oben angeheftet */
+        .room-card.tafel { background: #2e7d32; border: 2px solid #1b5e20; width: 60%; height: 25%; align-self: flex-start; margin-top: 5px; border-radius: 3px; }
+        .room-card.lehrer { background: #795548; border: 2px solid #4e342e; width: 80%; height: 60%; }
 
-        /* --- DRAGGABLE STUDENT CARD --- */
-        .student-card {
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 8px;
-            width: 80%;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-dark);
-            cursor: grab;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            user-select: none;
-            z-index: 10;
-        }
+        .card * { pointer-events: none; }
 
-        .student-card:active {
-            cursor: grabbing;
-        }
+        /* --- FOOTER & MODALS --- */
+        .main-footer { background-color: var(--footer-bg); padding: 15px 40px; display: flex; gap: 10px; }
+        .main-footer button { background: transparent; border: 1px solid white; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
+        .main-footer button:hover { background: rgba(255, 255, 255, 0.2); }
 
-        /* --- FOOTER --- */
-        .main-footer {
-            background-color: var(--footer-bg);
-            padding: 15px 40px;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            color: white;
-            font-size: 0.8rem;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; text-align: center; min-width: 350px; max-height: 80vh; overflow-y: auto; color: #333; }
+        .modal-content h2 { margin-bottom: 20px; color: var(--sidebar-bg-bottom); }
+        .modal-btn { background: var(--sidebar-bg-bottom); color: white; border: none; padding: 10px 25px; border-radius: 20px; font-size: 1rem; cursor: pointer; margin-top: 15px; }
+        .group-result { margin-top: 15px; text-align: left; }
+        .group-box { background: #f1f8e9; border-left: 4px solid var(--accent); padding: 10px; margin-bottom: 10px; border-radius: 4px; }
 
-        .footer-buttons button {
-            background: transparent;
-            border: 1px solid white;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            margin-right: 10px;
-            font-size: 0.9rem;
-        }
-
-        .footer-buttons button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* --- MODAL (AUSLOSEN) --- */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            text-align: center;
-            color: var(--text-dark);
-            min-width: 300px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .modal-content h2 {
-            font-weight: 300;
-            color: var(--sidebar-bg-bottom);
-            margin-bottom: 15px;
-        }
-
-        .modal-content h1 {
-            font-size: 2.5rem;
-            margin-bottom: 25px;
-        }
-
-        .modal-content button {
-            background: var(--sidebar-bg-bottom);
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 20px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-
-        .modal-content button:hover {
-            background: var(--sidebar-bg-top);
-        }
-
-        /* Print Layout */
         @media print {
             .sidebar, .main-footer, .top-bar span { display: none !important; }
             .main-area { width: 100vw; height: 100vh; }
-            .grid-wrapper { padding: 0; }
+            .student-card[data-group] { border: 1px solid #ccc; } /* Druck ohne Gruppen-Rand */
         }
     </style>
 </head>
@@ -306,275 +139,450 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <span style="font-size: 1.5rem;">🏫</span>
-            <h1>Sitzplangenerator</h1>
+            <h1>Sitzplan-Pro</h1>
         </div>
 
-        <div class="input-group">
-            <label>Klasse</label>
-            <input type="text" placeholder="z.B. 8C" id="classNameInput">
-            <div class="hint-text">Optional, um dem Sitzplan einen Namen zu geben.</div>
+        <div class="section-title">Raum & Raster</div>
+        <div class="input-group flex-row">
+            <input type="number" id="gridRows" value="7" min="3" max="15" title="Zeilen">
+            <span>x</span>
+            <input type="number" id="gridCols" value="10" min="3" max="15" title="Spalten">
+            <button class="icon-btn" onclick="updateGridSize()">Update</button>
         </div>
 
+        <div class="section-title">Schüler hinzufügen</div>
         <div class="input-group">
-            <div style="display: flex; justify-content: space-between;">
-                <label>Schüler</label>
-                <label style="font-size: 0.7rem" id="studentCount">0 Schüler</label>
-            </div>
-            <div class="student-input-wrapper">
-                <input type="text" id="studentInput" placeholder="Neuen Namen eingeben...">
+            <div class="flex-row" style="margin-bottom: 5px;">
+                <input type="text" id="studentInput" placeholder="Name...">
+                <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                <button class="icon-btn" onclick="document.getElementById('photoInput').click()" title="Foto wählen">📷</button>
                 <button class="icon-btn" onclick="addStudentFromInput()">+</button>
             </div>
-            <div class="hint-text">Drücke "Enter", um den Namen zur Liste hinzuzufügen.</div>
+            <div style="font-size: 0.7rem; color: #a5d6a7;" id="photoIndicator">Kein Foto ausgewählt</div>
+        </div>
+        
+        <div class="action-links" style="margin-bottom: 10px;">
+            <a href="#" onclick="document.getElementById('fileInput').click()">❯ Klassenliste hochladen (.txt/.csv)</a>
+            <input type="file" id="fileInput" accept=".txt,.csv" style="display: none;">
         </div>
 
-        <div class="student-list" id="sidebarStudentList">
-            </div>
+        <div class="student-list" id="sidebarStudentList"></div>
 
-        <div class="sidebar-footer-links">
-            <a href="#" id="btnImport">❯ Klassenliste importieren</a>
-            <input type="file" id="fileInput" accept=".txt,.csv" style="display: none;">
-            <a href="#" id="btnTemplate">❯ Vorlage verwenden</a>
-            <a href="#" id="btnDraw">❯ Schüler auslosen</a>
+        <div class="section-title">Raumelemente</div>
+        <div class="tools-container">
+            <div class="tool-item" draggable="true" data-template="tafel">Tafel</div>
+            <div class="tool-item" draggable="true" data-template="lehrer">Lehrertisch</div>
+            <div class="tool-item" draggable="true" data-template="fenster" title="Auf ein Feld ziehen für Fensterplatz">🪟 Fenster</div>
+        </div>
+
+        <div class="section-title">Anordnen & Verschieben</div>
+        <div class="input-group flex-row">
+            <select id="formationSelect">
+                <option value="reihen">Reihen</option>
+                <option value="hufeisen">Hufeisen</option>
+                <option value="gruppen">Gruppentische</option>
+            </select>
+            <button class="icon-btn" onclick="applyFormation()">Anordnen</button>
+        </div>
+        <div class="toggle-wrapper">
+            <label class="toggle-switch">
+                <input type="checkbox" id="moveGroupToggle" checked>
+                <span class="slider"></span>
+            </label>
+            <span>Ganze Formationen verschieben</span>
+        </div>
+
+        <div class="section-title">Aktionen</div>
+        <div class="action-links">
+            <a href="#" onclick="openGroupModal()">❯ Gruppen losen</a>
+            <a href="#" onclick="openDrawModal()">❯ Einzelnen Schüler losen</a>
+            <a href="#" onclick="clearRoomElements()">❯ Raumelemente & Gruppen entfernen</a>
         </div>
     </aside>
 
     <main class="main-area">
         <div class="top-bar">
-            <h2 id="planTitle">Sitzplan</h2>
-            <div>
-                <span style="font-size: 1.5rem; color: var(--sidebar-bg-bottom); cursor: pointer;" onclick="window.print()" title="Drucken">🖨️</span>
-            </div>
+            <h2>Sitzplan <span style="font-size: 0.9rem; color: #888; font-weight: normal;">(Tafel ist oben)</span></h2>
+            <div><span style="font-size: 1.5rem; cursor: pointer;" onclick="window.print()" title="Drucken">🖨️</span></div>
         </div>
 
         <div class="grid-wrapper">
-            <div class="seating-grid" id="seatingGrid">
-                </div>
+            <div class="seating-grid" id="seatingGrid"></div>
         </div>
 
         <footer class="main-footer">
-            <div class="footer-buttons">
-                <button onclick="randomizeSeats()">Losen</button>
-                <button onclick="window.print()">Drucken</button>
-            </div>
+            <button onclick="randomizeSeats()">Schüler zufällig verteilen</button>
         </footer>
     </main>
 
+    <div id="groupModal" class="modal">
+        <div class="modal-content">
+            <h2>👥 Gruppen losen</h2>
+            <div class="input-group">
+                <label>Gruppengröße (Anzahl Schüler):</label>
+                <input type="number" id="groupSizeInput" value="4" min="2" style="color: black; border: 1px solid #ccc;">
+            </div>
+            <button class="modal-btn" onclick="generateGroups()">Losen</button>
+            <div id="groupResults" class="group-result"></div>
+            <br><button class="modal-btn" style="background: #999;" onclick="closeModals()">Schließen</button>
+        </div>
+    </div>
     <div id="drawModal" class="modal">
         <div class="modal-content">
-            <h2>🎲 Zufallsgenerator</h2>
-            <h1 id="drawnName">Name</h1>
-            <button onclick="closeModal()">Weiter</button>
+            <h2>🎲 Zufallsschüler</h2>
+            <h1 id="drawnName" style="font-size: 2.5rem; margin: 20px 0;">Name</h1>
+            <button class="modal-btn" onclick="closeModals()">Weiter</button>
         </div>
     </div>
 
     <script>
-        const studentInput = document.getElementById('studentInput');
-        const sidebarList = document.getElementById('sidebarStudentList');
         const grid = document.getElementById('seatingGrid');
-        const countLabel = document.getElementById('studentCount');
-        const classNameInput = document.getElementById('classNameInput');
-        const planTitle = document.getElementById('planTitle');
+        const sidebarList = document.getElementById('sidebarStudentList');
+        const photoInput = document.getElementById('photoInput');
         const fileInput = document.getElementById('fileInput');
+        const photoIndicator = document.getElementById('photoIndicator');
+        const studentInput = document.getElementById('studentInput');
 
         let students = [];
         let draggedCard = null;
+        let draggedTemplate = null; 
+        let tempPhotoDataUrl = null;
 
-        // 1. Grid initialisieren (10x7 = 70 Plätze)
-        function initGrid() {
-            grid.innerHTML = '';
-            for (let i = 0; i < 70; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('grid-cell');
-                cell.dataset.index = i;
-                
-                cell.addEventListener('dragover', dragOver);
-                cell.addEventListener('dragenter', dragEnter);
-                cell.addEventListener('dragleave', dragLeave);
-                cell.addEventListener('drop', drop);
-                
-                grid.appendChild(cell);
+        // --- SETUP & LISTENERS ---
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    tempPhotoDataUrl = evt.target.result;
+                    photoIndicator.innerText = "Foto geladen! (" + file.name + ")";
+                    photoIndicator.style.color = "#fff";
+                };
+                reader.readAsDataURL(file);
             }
-        }
-
-        // 2. Schüler Logik
-        function addStudentByName(name) {
-            if (!name || name.trim() === '') return;
-            const cleanName = name.trim();
-            const id = 'student-' + Date.now() + Math.floor(Math.random() * 1000);
-            
-            students.push({ id, name: cleanName });
-            renderSidebarItem(id, cleanName);
-            createDraggableCard(id, cleanName);
-            updateCount();
-        }
-
-        function addStudentFromInput() {
-            addStudentByName(studentInput.value);
-            studentInput.value = ''; // Feld leeren
-            studentInput.focus();
-        }
-
-        studentInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') addStudentFromInput();
-        });
-
-        classNameInput.addEventListener('input', function(e) {
-            planTitle.innerText = e.target.value ? `Sitzplan - ${e.target.value}` : 'Sitzplan';
-        });
-
-        function renderSidebarItem(id, name) {
-            const div = document.createElement('div');
-            div.classList.add('student-list-item');
-            div.id = 'sidebar-' + id;
-            div.innerHTML = `
-                <span>${name}</span>
-                <button class="icon-btn" style="width: 24px; height: 24px; font-size: 1rem; line-height: 0;" onclick="removeStudent('${id}')">-</button>
-            `;
-            sidebarList.appendChild(div);
-        }
-
-        function createDraggableCard(id, name) {
-            const card = document.createElement('div');
-            card.classList.add('student-card');
-            card.draggable = true;
-            card.innerText = name;
-            card.id = 'card-' + id;
-
-            card.addEventListener('dragstart', dragStart);
-            card.addEventListener('dragend', dragEnd);
-
-            // Finde erste leere Zelle
-            const cells = document.querySelectorAll('.grid-cell');
-            for (let cell of cells) {
-                if (cell.children.length === 0) {
-                    cell.appendChild(card);
-                    break;
-                }
-            }
-        }
-
-        function removeStudent(id) {
-            students = students.filter(s => s.id !== id);
-            const sidebarItem = document.getElementById('sidebar-' + id);
-            if (sidebarItem) sidebarItem.remove();
-            const card = document.getElementById('card-' + id);
-            if (card) card.remove();
-            updateCount();
-        }
-
-        function updateCount() {
-            countLabel.innerText = `${students.length} Schüler${students.length === 1 ? '' : ''}`;
-        }
-
-        // 3. Drag & Drop Logik
-        function dragStart(e) {
-            draggedCard = this;
-            setTimeout(() => this.style.opacity = '0.5', 0);
-        }
-
-        function dragEnd() {
-            setTimeout(() => this.style.opacity = '1', 0);
-            draggedCard = null;
-        }
-
-        function dragOver(e) { e.preventDefault(); }
-        function dragEnter(e) { e.preventDefault(); this.classList.add('drag-over'); }
-        function dragLeave() { this.classList.remove('drag-over'); }
-
-        function drop() {
-            this.classList.remove('drag-over');
-            if (this.children.length > 0) {
-                const existingCard = this.children[0];
-                const originCell = draggedCard.parentElement;
-                originCell.appendChild(existingCard); // Platztausch
-            }
-            this.appendChild(draggedCard);
-        }
-
-        // 4. Losen (Sitzplan)
-        function randomizeSeats() {
-            if (students.length === 0) return;
-            const allCards = Array.from(document.querySelectorAll('.student-card'));
-            const cells = document.querySelectorAll('.grid-cell');
-            cells.forEach(cell => cell.innerHTML = '');
-
-            // Mischen (Fisher-Yates)
-            for (let i = allCards.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
-            }
-
-            let availableIndices = Array.from(Array(70).keys());
-            allCards.forEach(card => {
-                const randomPos = Math.floor(Math.random() * availableIndices.length);
-                const cellIndex = availableIndices.splice(randomPos, 1)[0];
-                cells[cellIndex].appendChild(card);
-            });
-        }
-
-        // 5. ERWEITERTE FUNKTIONEN (Sidebar-Links)
-
-        // a) Datei importieren
-        document.getElementById('btnImport').addEventListener('click', (e) => {
-            e.preventDefault();
-            fileInput.click();
         });
 
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const text = evt.target.result;
-                // Trennt bei Komma ODER Zeilenumbruch
-                const names = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
+                const names = evt.target.result.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
                 names.forEach(n => addStudentByName(n));
             };
             reader.readAsText(file);
-            e.target.value = ''; // Reset Input
+            e.target.value = ''; 
         });
 
-        // b) Vorlage verwenden
-        document.getElementById('btnTemplate').addEventListener('click', (e) => {
-            e.preventDefault();
-            const templateNames = ["Anna", "Ben", "Clara", "David", "Emma", "Felix", "Greta", "Hans", "Ida", "Jan", "Klara", "Leo", "Mia", "Noah", "Olivia", "Paul"];
+        function updateGridSize() {
+            const rows = parseInt(document.getElementById('gridRows').value) || 7;
+            const cols = parseInt(document.getElementById('gridCols').value) || 10;
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
             
-            // Vorher aufräumen
-            students.forEach(s => {
-                const card = document.getElementById('card-' + s.id);
-                if(card) card.remove();
-            });
-            sidebarList.innerHTML = '';
-            students = [];
-            
-            templateNames.forEach(n => addStudentByName(n));
-            randomizeSeats(); // Direkt mischen
-            classNameInput.value = "8C (Vorlage)";
-            planTitle.innerText = "Sitzplan - 8C (Vorlage)";
-        });
+            const existingCards = Array.from(document.querySelectorAll('.card'));
+            const windowCells = Array.from(document.querySelectorAll('.grid-cell.is-window')).map(c => c.dataset.index);
 
-        // c) Schüler auslosen
-        document.getElementById('btnDraw').addEventListener('click', (e) => {
-            e.preventDefault();
-            if(students.length === 0) {
-                alert("Bitte zuerst Schüler hinzufügen!");
-                return;
+            grid.innerHTML = '';
+            for (let i = 0; i < rows * cols; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                cell.dataset.index = i;
+                if(windowCells.includes(i.toString())) cell.classList.add('is-window');
+                cell.addEventListener('dragover', dragOver);
+                cell.addEventListener('dragenter', dragEnter);
+                cell.addEventListener('dragleave', dragLeave);
+                cell.addEventListener('drop', drop);
+                grid.appendChild(cell);
             }
-            const randomIndex = Math.floor(Math.random() * students.length);
-            const chosenStudent = students[randomIndex].name;
-            
-            document.getElementById('drawnName').innerText = chosenStudent;
-            document.getElementById('drawModal').style.display = 'flex';
-        });
 
-        function closeModal() {
-            document.getElementById('drawModal').style.display = 'none';
+            const cells = document.querySelectorAll('.grid-cell');
+            existingCards.forEach((card, index) => {
+                if(index < cells.length) cells[index].appendChild(card);
+            });
         }
 
-        // App Start
-        initGrid();
+        // --- STUDENT LOGIC ---
+        function addStudentByName(name, photoUrl = null) {
+            const id = 'student-' + Date.now() + Math.floor(Math.random() * 1000);
+            students.push({ id, name });
+            
+            const div = document.createElement('div');
+            div.classList.add('student-list-item');
+            div.id = 'sidebar-' + id;
+            div.innerHTML = `<span>${name}</span><button class="icon-btn" style="padding:2px 8px" onclick="removeStudent('${id}')">X</button>`;
+            sidebarList.appendChild(div);
 
+            const card = document.createElement('div');
+            card.classList.add('card', 'student-card');
+            card.draggable = true;
+            card.id = 'card-' + id;
+            card.dataset.type = 'student';
+            
+            if (photoUrl) {
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                card.appendChild(img);
+            }
+            const nameSpan = document.createElement('span');
+            nameSpan.innerText = name;
+            card.appendChild(nameSpan);
+
+            card.addEventListener('dragstart', dragStart);
+            card.addEventListener('dragend', dragEnd);
+
+            const cells = document.querySelectorAll('.grid-cell');
+            const emptyCell = Array.from(cells).find(c => c.children.length === 0);
+            if (emptyCell) emptyCell.appendChild(card);
+        }
+
+        function addStudentFromInput() {
+            const name = studentInput.value.trim();
+            if (!name) return;
+            addStudentByName(name, tempPhotoDataUrl);
+            studentInput.value = '';
+            tempPhotoDataUrl = null;
+            photoIndicator.innerText = "Kein Foto ausgewählt";
+            photoIndicator.style.color = "#a5d6a7";
+            studentInput.focus();
+        }
+
+        studentInput.addEventListener('keypress', e => { if (e.key === 'Enter') addStudentFromInput(); });
+
+        function removeStudent(id) {
+            students = students.filter(s => s.id !== id);
+            document.getElementById('sidebar-' + id)?.remove();
+            document.getElementById('card-' + id)?.remove();
+        }
+
+        // --- DRAG & DROP & GROUPS ---
+        document.querySelectorAll('.tool-item').forEach(tool => {
+            tool.addEventListener('dragstart', function(e) {
+                draggedTemplate = this.dataset.template;
+                e.dataTransfer.setData('text/plain', 'template');
+            });
+            tool.addEventListener('dragend', () => draggedTemplate = null);
+        });
+
+        function dragStart(e) { draggedCard = this; setTimeout(() => this.style.opacity = '0.5', 0); }
+        function dragEnd() { setTimeout(() => this.style.opacity = '1', 0); draggedCard = null; }
+        function dragOver(e) { e.preventDefault(); }
+        function dragEnter(e) { e.preventDefault(); this.classList.add('drag-over'); }
+        function dragLeave() { this.classList.remove('drag-over'); }
+
+        function drop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const cols = parseInt(document.getElementById('gridCols').value);
+            const rows = parseInt(document.getElementById('gridRows').value);
+
+            if (draggedTemplate) {
+                if (draggedTemplate === 'fenster') {
+                    this.classList.toggle('is-window');
+                } else {
+                    const card = document.createElement('div');
+                    card.classList.add('card', 'room-card', draggedTemplate);
+                    card.draggable = true;
+                    card.id = 'room-' + Date.now();
+                    card.dataset.type = draggedTemplate;
+                    card.innerText = draggedTemplate === 'tafel' ? 'Tafel' : 'Lehrer';
+                    card.addEventListener('dragstart', dragStart);
+                    card.addEventListener('dragend', dragEnd);
+                    if (this.children.length > 0) this.innerHTML = '';
+                    this.appendChild(card);
+                }
+                draggedTemplate = null;
+                return;
+            }
+
+            if (draggedCard) {
+                const moveGroupToggle = document.getElementById('moveGroupToggle').checked;
+                const groupId = draggedCard.dataset.group;
+
+                if (moveGroupToggle && groupId) {
+                    // GANZE GRUPPE VERSCHIEBEN
+                    const groupCards = Array.from(document.querySelectorAll(`.student-card[data-group="${groupId}"]`));
+                    const origIndex = parseInt(draggedCard.parentElement.dataset.index);
+                    const targetIndex = parseInt(this.dataset.index);
+                    
+                    const origR = Math.floor(origIndex / cols);
+                    const origC = origIndex % cols;
+                    const targetR = Math.floor(targetIndex / cols);
+                    const targetC = targetIndex % cols;
+                    const dR = targetR - origR;
+                    const dC = targetC - origC;
+
+                    // Prüfen ob alle neuen Positionen im Raster liegen
+                    let valid = true;
+                    let moves = [];
+                    groupCards.forEach(c => {
+                        const idx = parseInt(c.parentElement.dataset.index);
+                        const r = Math.floor(idx / cols);
+                        const col = idx % cols;
+                        const newR = r + dR;
+                        const newC = col + dC;
+                        if(newR < 0 || newR >= rows || newC < 0 || newC >= cols) valid = false;
+                        moves.push({ card: c, oldIdx: idx, newIdx: newR * cols + newC });
+                    });
+
+                    if (valid) {
+                        const cells = document.querySelectorAll('.grid-cell');
+                        // 1. Alle aus dem DOM nehmen
+                        groupCards.forEach(c => c.remove());
+                        
+                        // 2. Platztausch für Fremd-Karten, die im Weg sind
+                        moves.forEach(m => {
+                            const targetCell = cells[m.newIdx];
+                            if(targetCell.children.length > 0) {
+                                const stranger = targetCell.children[0];
+                                cells[m.oldIdx].appendChild(stranger); // Fremden auf alten Platz schieben
+                            }
+                        });
+
+                        // 3. Gruppe auf neue Plätze setzen
+                        moves.forEach(m => cells[m.newIdx].appendChild(m.card));
+                    }
+                } else {
+                    // EINZELNE KARTE VERSCHIEBEN (PLATZTAUSCH)
+                    if (this.children.length > 0) {
+                        const existingCard = this.children[0];
+                        draggedCard.parentElement.appendChild(existingCard);
+                    }
+                    this.appendChild(draggedCard);
+                }
+            }
+        }
+
+        // --- FORMATION ALGORITHMS (SYMMETRIC) ---
+        function applyFormation() {
+            const type = document.getElementById('formationSelect').value;
+            const rows = parseInt(document.getElementById('gridRows').value);
+            const cols = parseInt(document.getElementById('gridCols').value);
+            const cells = document.querySelectorAll('.grid-cell');
+            
+            const studentCards = Array.from(document.querySelectorAll('.student-card'));
+            studentCards.forEach(c => c.remove());
+
+            // Neue Gruppen-ID für diese Formation
+            const groupId = 'form-' + Date.now();
+            let targetIndices = [];
+
+            // Reihe 0 bleibt FREI (Abstand nach vorne)
+            if (type === 'reihen') {
+                let r = 1; 
+                let remaining = studentCards.length;
+                let maxCols = cols - 2; 
+                if (maxCols < 1) maxCols = cols;
+
+                while (remaining > 0 && r < rows) {
+                    let count = Math.min(remaining, maxCols);
+                    let startCol = Math.floor((cols - count) / 2); // Symmetrisch zentrieren
+                    for (let c = 0; c < count; c++) targetIndices.push(r * cols + (startCol + c));
+                    remaining -= count;
+                    r++;
+                }
+            } 
+            else if (type === 'hufeisen') {
+                let maxR = rows - 2;
+                if(maxR < 1) maxR = 1;
+                let cLeft = 1;
+                let cRight = cols - 2;
+                if(cRight <= cLeft) cRight = cols - 1;
+
+                // Arme (Symmetrisch paarweise befüllen von vorne nach hinten)
+                for(let currR = 1; currR <= maxR; currR++) {
+                    targetIndices.push(currR * cols + cLeft);
+                    if(cLeft !== cRight) targetIndices.push(currR * cols + cRight);
+                }
+                // Verbindung hinten
+                let currC_L = cLeft + 1;
+                let currC_R = cRight - 1;
+                while(currC_L <= currC_R) {
+                    targetIndices.push(maxR * cols + currC_L);
+                    if(currC_L !== currC_R) targetIndices.push(maxR * cols + currC_R);
+                    currC_L++; currC_R--;
+                }
+            } 
+            else if (type === 'gruppen') {
+                let blocks = Math.ceil(studentCards.length / 4);
+                let blocksPerRow = Math.max(1, Math.floor(cols / 3)); 
+                let r = 1;
+                let blockIndex = 0;
+
+                while (blockIndex < blocks && r < rows - 1) {
+                    let blocksInThisRow = Math.min(blocks - blockIndex, blocksPerRow);
+                    let totalWidth = blocksInThisRow * 2 + (blocksInThisRow - 1) * 1;
+                    let startCol = Math.floor((cols - totalWidth) / 2);
+
+                    for (let b = 0; b < blocksInThisRow; b++) {
+                        let bc = startCol + b * 3; 
+                        targetIndices.push(r * cols + bc, r * cols + bc + 1, (r + 1) * cols + bc, (r + 1) * cols + bc + 1);
+                        blockIndex++;
+                    }
+                    r += 3;
+                }
+            }
+
+            // Anwenden & Gruppieren
+            studentCards.forEach((card, i) => {
+                card.dataset.group = groupId; // Alle markieren
+                if (i < targetIndices.length && cells[targetIndices[i]].children.length === 0) {
+                    cells[targetIndices[i]].appendChild(card);
+                } else {
+                    const emptyCell = Array.from(cells).find(c => c.children.length === 0);
+                    if(emptyCell) emptyCell.appendChild(card);
+                }
+            });
+        }
+
+        // --- UTILS ---
+        function clearRoomElements() {
+            document.querySelectorAll('.room-card').forEach(c => c.remove());
+            document.querySelectorAll('.is-window').forEach(c => c.classList.remove('is-window'));
+            document.querySelectorAll('.student-card').forEach(c => delete c.dataset.group); // Gruppierungen aufheben
+        }
+
+        function randomizeSeats() {
+            const studentCards = Array.from(document.querySelectorAll('.student-card'));
+            const cells = Array.from(document.querySelectorAll('.grid-cell')).filter(c => c.children.length === 0 || c.children[0].dataset.type === 'student');
+            studentCards.forEach(c => { c.remove(); delete c.dataset.group; }); // Mischung löst Gruppen auf
+            
+            for (let i = studentCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [studentCards[i], studentCards[j]] = [studentCards[j], studentCards[i]];
+            }
+            studentCards.forEach(card => {
+                const emptyCells = cells.filter(c => c.children.length === 0);
+                if(emptyCells.length > 0) emptyCells[Math.floor(Math.random() * emptyCells.length)].appendChild(card);
+            });
+        }
+
+        // Modals
+        function openDrawModal() {
+            if(students.length === 0) return alert("Bitte zuerst Schüler hinzufügen!");
+            document.getElementById('drawnName').innerText = students[Math.floor(Math.random() * students.length)].name;
+            document.getElementById('drawModal').style.display = 'flex';
+        }
+        function openGroupModal() {
+            if(students.length === 0) return alert("Bitte zuerst Schüler hinzufügen!");
+            document.getElementById('groupResults').innerHTML = '';
+            document.getElementById('groupModal').style.display = 'flex';
+        }
+        function generateGroups() {
+            const size = parseInt(document.getElementById('groupSizeInput').value);
+            if(size < 2) return;
+            let shuffled = [...students].sort(() => Math.random() - 0.5);
+            const container = document.getElementById('groupResults');
+            container.innerHTML = '';
+            for (let i = 0; i < shuffled.length; i += size) {
+                let group = shuffled.slice(i, i + size).map(s => s.name);
+                container.innerHTML += `<div class="group-box"><strong>Gruppe ${(i/size)+1}:</strong> ${group.join(', ')}</div>`;
+            }
+        }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+        // Init
+        updateGridSize();
     </script>
 </body>
 </html>
