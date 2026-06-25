@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erweiterter Sitzplangenerator</title>
+    <title>Erweiterter Sitzplangenerator Pro</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
@@ -51,15 +51,16 @@
         }
         .icon-btn:hover { background: rgba(255,255,255,0.2); }
 
-        .student-list { flex-grow: 1; overflow-y: auto; max-height: 150px; margin-bottom: 10px; }
+        .student-list { flex-grow: 1; overflow-y: auto; max-height: 130px; margin-bottom: 10px; }
         .student-list-item {
             display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); padding: 6px 10px; border-radius: 4px; margin-bottom: 5px; font-size: 0.9rem;
         }
 
-        .tools-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .tools-container { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
         .tool-item {
-            background: rgba(255,255,255,0.1); border: 1px dashed white; padding: 8px; border-radius: 4px; cursor: grab; font-size: 0.8rem; text-align: center; flex: 1; min-width: 80px;
+            background: rgba(255,255,255,0.1); border: 1px dashed white; padding: 6px; border-radius: 4px; cursor: grab; font-size: 0.75rem; text-align: center; flex: 1; min-width: 85px;
         }
+        .tool-item:hover { background: rgba(255,255,255,0.2); }
 
         .action-links a { color: white; text-decoration: none; display: block; padding: 6px 0; font-size: 0.9rem; }
         .action-links a:hover { color: #e8f5e9; text-decoration: underline; }
@@ -90,28 +91,68 @@
         }
         .grid-cell.drag-over { background-color: #e8f5e9; border: 2px dashed var(--accent); }
         
-        .grid-cell.is-window { background-color: #e3f2fd; border-right: 6px solid #64b5f6; }
-        .grid-cell.is-window::before { content: '🪟 Fenster'; position: absolute; font-size: 0.7rem; color: #1976d2; opacity: 0.5; }
+        /* Wandausrichtung für Fensterplatz */
+        .grid-cell.is-window-top { border-top: 6px solid #2196f3; }
+        .grid-cell.is-window-bottom { border-bottom: 6px solid #2196f3; }
+        .grid-cell.is-window-left { border-left: 6px solid #2196f3; }
+        .grid-cell.is-window-right { border-right: 6px solid #2196f3; }
+        .grid-cell[class*="is-window-"]::before { content: '🪟'; position: absolute; font-size: 0.65rem; top: 2px; left: 2px; opacity: 0.5; z-index: 1; }
 
         /* --- DRAGGABLE CARDS --- */
         .card {
-            border-radius: 6px; width: 90%; height: 90%; display: flex; flex-direction: column;
+            border-radius: 6px; width: 92%; height: 92%; display: flex; flex-direction: column;
             align-items: center; justify-content: center; cursor: grab; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             user-select: none; z-index: 10; font-size: 0.85rem; font-weight: bold; text-align: center; padding: 4px;
-            transition: border 0.2s;
         }
         .card:active { cursor: grabbing; }
         
-        .student-card { background: white; border: 1px solid #ccc; color: var(--text-dark); }
-        .student-card[data-group] { border: 2px solid var(--group-color); } /* Hervorhebung für gruppierte Schüler */
+        /* Schülerkarte & Vergrößerung bei langem Hover */
+        .student-card { 
+            background: white; border: 1px solid #ccc; color: var(--text-dark); 
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease, background-color 0.2s ease;
+            transition-delay: 0s;
+        }
+        .student-card[data-group] { border: 2px solid var(--group-color); } 
+        .student-card img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; border: 1px solid #ccc; transition: all 0.2s ease; }
         
-        .student-card img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; border: 1px solid #ccc; }
+        .student-card:hover {
+            transform: scale(1.6);
+            z-index: 9999 !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            background-color: #ffffff !important;
+            transition-delay: 0.6s; /* Aktiviert den Zoom erst nach längerem Hovern */
+        }
+        .student-card:hover img {
+            width: 48px;
+            height: 48px;
+            transition-delay: 0.6s;
+        }
+        .student-card:hover span {
+            font-size: 1rem;
+            transition-delay: 0.6s;
+        }
         
-        .room-card { color: white; font-size: 0.8rem; }
+        /* Raumelemente Optik */
+        .room-card { color: white; font-size: 0.8rem; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
         
-        /* Modifizierte Tafel: Bruchteil des Feldes, oben angeheftet */
-        .room-card.tafel { background: #2e7d32; border: 2px solid #1b5e20; width: 60%; height: 25%; align-self: flex-start; margin-top: 5px; border-radius: 3px; }
-        .room-card.lehrer { background: #795548; border: 2px solid #4e342e; width: 80%; height: 60%; }
+        .room-card.tafel { 
+            background: #1b4332; border: 3px double #d8f3dc; border-bottom: 6px solid #8b5a2b; 
+            width: 90%; height: 40%; align-self: flex-start; margin-top: 4px; border-radius: 3px; 
+        }
+        .room-card.lehrer { 
+            background: linear-gradient(135deg, #a67c52 0%, #6e4720 100%); border: 2px solid #4a2f13; 
+            width: 80%; height: 65%; border-radius: 4px; 
+        }
+        .room-card.computer {
+            background: linear-gradient(135deg, #00acc1 0%, #006064 100%); border: 2px solid #00838f;
+            width: 90%; height: 90%; border-radius: 6px;
+        }
+        .room-card.gesperrt {
+            background: #ffebee; border: 2px dashed #c62828; color: #c62828;
+            width: 90%; height: 90%; border-radius: 6px; opacity: 0.85;
+            background-image: linear-gradient(45deg, rgba(198,40,40,0.15) 25%, transparent 25%, transparent 50%, rgba(198,40,40,0.15) 50%, rgba(198,40,40,0.15) 75%, transparent 75%, transparent);
+            background-size: 15px 15px;
+        }
 
         .card * { pointer-events: none; }
 
@@ -120,7 +161,7 @@
         .main-footer button { background: transparent; border: 1px solid white; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
         .main-footer button:hover { background: rgba(255, 255, 255, 0.2); }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; text-align: center; min-width: 350px; max-height: 80vh; overflow-y: auto; color: #333; }
         .modal-content h2 { margin-bottom: 20px; color: var(--sidebar-bg-bottom); }
         .modal-btn { background: var(--sidebar-bg-bottom); color: white; border: none; padding: 10px 25px; border-radius: 20px; font-size: 1rem; cursor: pointer; margin-top: 15px; }
@@ -130,7 +171,7 @@
         @media print {
             .sidebar, .main-footer, .top-bar span { display: none !important; }
             .main-area { width: 100vw; height: 100vh; }
-            .student-card[data-group] { border: 1px solid #ccc; } /* Druck ohne Gruppen-Rand */
+            .student-card[data-group] { border: 1px solid #ccc; }
         }
     </style>
 </head>
@@ -170,9 +211,11 @@
 
         <div class="section-title">Raumelemente</div>
         <div class="tools-container">
-            <div class="tool-item" draggable="true" data-template="tafel">Tafel</div>
-            <div class="tool-item" draggable="true" data-template="lehrer">Lehrertisch</div>
-            <div class="tool-item" draggable="true" data-template="fenster" title="Auf ein Feld ziehen für Fensterplatz">🪟 Fenster</div>
+            <div class="tool-item" draggable="true" data-template="tafel">📋 Tafel</div>
+            <div class="tool-item" draggable="true" data-template="lehrer">💼 Lehrertisch</div>
+            <div class="tool-item" draggable="true" data-template="computer">🖥️ PC-Platz</div>
+            <div class="tool-item" draggable="true" data-template="gesperrt">🚫 Gesperrt</div>
+            <div class="tool-item" draggable="true" data-template="fenster" title="An eine Wand ziehen für Fensterplatz">🪟 Fenster</div>
         </div>
 
         <div class="section-title">Anordnen & Verschieben</div>
@@ -194,6 +237,9 @@
 
         <div class="section-title">Aktionen</div>
         <div class="action-links">
+            <a href="#" onclick="exportSitzplan()">💾 Sitzplan speichern (Download)</a>
+            <a href="#" onclick="document.getElementById('importInput').click()">📂 Sitzplan laden (JSON)</a>
+            <input type="file" id="importInput" accept=".json" style="display: none;" onchange="importSitzplan(event)">
             <a href="#" onclick="openGroupModal()">❯ Gruppen losen</a>
             <a href="#" onclick="openDrawModal()">❯ Einzelnen Schüler losen</a>
             <a href="#" onclick="clearRoomElements()">❯ Raumelemente & Gruppen entfernen</a>
@@ -281,14 +327,27 @@
             grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
             
             const existingCards = Array.from(document.querySelectorAll('.card'));
-            const windowCells = Array.from(document.querySelectorAll('.grid-cell.is-window')).map(c => c.dataset.index);
+            
+            // Bestehende Fensterplatzkonfigurationen auslesen und sichern
+            const windowCellsData = Array.from(document.querySelectorAll('.grid-cell')).map(c => {
+                return {
+                    index: c.dataset.index,
+                    isWindow: c.className.includes('is-window-'),
+                    classes: Array.from(c.classList).filter(cls => cls.startsWith('is-window-'))
+                }
+            }).filter(d => d.isWindow);
 
             grid.innerHTML = '';
             for (let i = 0; i < rows * cols; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('grid-cell');
                 cell.dataset.index = i;
-                if(windowCells.includes(i.toString())) cell.classList.add('is-window');
+                
+                const winMatch = windowCellsData.find(d => d.index == i);
+                if(winMatch) {
+                    winMatch.classes.forEach(cls => cell.classList.add(cls));
+                }
+
                 cell.addEventListener('dragover', dragOver);
                 cell.addEventListener('dragenter', dragEnter);
                 cell.addEventListener('dragleave', dragLeave);
@@ -378,14 +437,36 @@
 
             if (draggedTemplate) {
                 if (draggedTemplate === 'fenster') {
-                    this.classList.toggle('is-window');
+                    const idx = parseInt(this.dataset.index);
+                    const r = Math.floor(idx / cols);
+                    const c = idx % cols;
+                    
+                    // Altes Fenster löschen falls vorhanden (Toggle-Effekt)
+                    const wasWindow = this.className.includes('is-window-');
+                    this.classList.remove('is-window-top', 'is-window-bottom', 'is-window-left', 'is-window-right');
+                    
+                    if (!wasWindow) {
+                        // Dynamische Wandausrichtung anhand der Koordinaten berechnen
+                        if (r === 0) this.classList.add('is-window-top');
+                        else if (r === rows - 1) this.classList.add('is-window-bottom');
+                        else if (c === 0) this.classList.add('is-window-left');
+                        else if (c === cols - 1) this.classList.add('is-window-right');
+                        else this.classList.add('is-window-top'); // Standard-Fallback im Rauminneren
+                    }
                 } else {
                     const card = document.createElement('div');
                     card.classList.add('card', 'room-card', draggedTemplate);
                     card.draggable = true;
                     card.id = 'room-' + Date.now();
                     card.dataset.type = draggedTemplate;
-                    card.innerText = draggedTemplate === 'tafel' ? 'Tafel' : 'Lehrer';
+                    
+                    let labelText = '';
+                    if (draggedTemplate === 'tafel') labelText = 'Tafel';
+                    else if (draggedTemplate === 'lehrer') labelText = 'Lehrertisch';
+                    else if (draggedTemplate === 'computer') labelText = '🖥️ PC-Platz';
+                    else if (draggedTemplate === 'gesperrt') labelText = '🚫 Gesperrt';
+                    
+                    card.innerText = labelText;
                     card.addEventListener('dragstart', dragStart);
                     card.addEventListener('dragend', dragEnd);
                     if (this.children.length > 0) this.innerHTML = '';
@@ -400,7 +481,6 @@
                 const groupId = draggedCard.dataset.group;
 
                 if (moveGroupToggle && groupId) {
-                    // GANZE GRUPPE VERSCHIEBEN
                     const groupCards = Array.from(document.querySelectorAll(`.student-card[data-group="${groupId}"]`));
                     const origIndex = parseInt(draggedCard.parentElement.dataset.index);
                     const targetIndex = parseInt(this.dataset.index);
@@ -412,7 +492,6 @@
                     const dR = targetR - origR;
                     const dC = targetC - origC;
 
-                    // Prüfen ob alle neuen Positionen im Raster liegen
                     let valid = true;
                     let moves = [];
                     groupCards.forEach(c => {
@@ -427,23 +506,19 @@
 
                     if (valid) {
                         const cells = document.querySelectorAll('.grid-cell');
-                        // 1. Alle aus dem DOM nehmen
                         groupCards.forEach(c => c.remove());
                         
-                        // 2. Platztausch für Fremd-Karten, die im Weg sind
                         moves.forEach(m => {
                             const targetCell = cells[m.newIdx];
                             if(targetCell.children.length > 0) {
                                 const stranger = targetCell.children[0];
-                                cells[m.oldIdx].appendChild(stranger); // Fremden auf alten Platz schieben
+                                cells[m.oldIdx].appendChild(stranger);
                             }
                         });
 
-                        // 3. Gruppe auf neue Plätze setzen
                         moves.forEach(m => cells[m.newIdx].appendChild(m.card));
                     }
                 } else {
-                    // EINZELNE KARTE VERSCHIEBEN (PLATZTAUSCH)
                     if (this.children.length > 0) {
                         const existingCard = this.children[0];
                         draggedCard.parentElement.appendChild(existingCard);
@@ -453,7 +528,7 @@
             }
         }
 
-        // --- FORMATION ALGORITHMS (SYMMETRIC) ---
+        // --- FORMATION ALGORITHMS (SYMMETRIC & DYNAMIC) ---
         function applyFormation() {
             const type = document.getElementById('formationSelect').value;
             const rows = parseInt(document.getElementById('gridRows').value);
@@ -463,20 +538,21 @@
             const studentCards = Array.from(document.querySelectorAll('.student-card'));
             studentCards.forEach(c => c.remove());
 
-            // Neue Gruppen-ID für diese Formation
             const groupId = 'form-' + Date.now();
             let targetIndices = [];
 
-            // Reihe 0 bleibt FREI (Abstand nach vorne)
             if (type === 'reihen') {
+                const userLen = prompt("Wie viele Schüler maximal pro Bankreihe nebeneinander platziert werden?", "4");
+                let maxCols = parseInt(userLen) || (cols - 2);
+                if (maxCols < 1) maxCols = cols;
+                if (maxCols > cols) maxCols = cols;
+
                 let r = 1; 
                 let remaining = studentCards.length;
-                let maxCols = cols - 2; 
-                if (maxCols < 1) maxCols = cols;
 
                 while (remaining > 0 && r < rows) {
                     let count = Math.min(remaining, maxCols);
-                    let startCol = Math.floor((cols - count) / 2); // Symmetrisch zentrieren
+                    let startCol = Math.floor((cols - count) / 2); 
                     for (let c = 0; c < count; c++) targetIndices.push(r * cols + (startCol + c));
                     remaining -= count;
                     r++;
@@ -489,12 +565,10 @@
                 let cRight = cols - 2;
                 if(cRight <= cLeft) cRight = cols - 1;
 
-                // Arme (Symmetrisch paarweise befüllen von vorne nach hinten)
                 for(let currR = 1; currR <= maxR; currR++) {
                     targetIndices.push(currR * cols + cLeft);
                     if(cLeft !== cRight) targetIndices.push(currR * cols + cRight);
                 }
-                // Verbindung hinten
                 let currC_L = cLeft + 1;
                 let currC_R = cRight - 1;
                 while(currC_L <= currC_R) {
@@ -504,28 +578,42 @@
                 }
             } 
             else if (type === 'gruppen') {
-                let blocks = Math.ceil(studentCards.length / 4);
-                let blocksPerRow = Math.max(1, Math.floor(cols / 3)); 
+                const userSize = prompt("Gewünschte Gruppengröße pro Tisch-Cluster (z.B. 2, 4 oder 6 Schüler):", "4");
+                let groupSize = parseInt(userSize) || 4;
+                
+                let blockWidth = 2;
+                let blockHeight = Math.ceil(groupSize / blockWidth);
+                if(groupSize === 2) { blockWidth = 2; blockHeight = 1; }
+
+                let blocks = Math.ceil(studentCards.length / groupSize);
+                let blocksPerRow = Math.max(1, Math.floor(cols / (blockWidth + 1))); 
                 let r = 1;
                 let blockIndex = 0;
 
-                while (blockIndex < blocks && r < rows - 1) {
+                while (blockIndex < blocks && r < rows - blockHeight + 1) {
                     let blocksInThisRow = Math.min(blocks - blockIndex, blocksPerRow);
-                    let totalWidth = blocksInThisRow * 2 + (blocksInThisRow - 1) * 1;
+                    let totalWidth = blocksInThisRow * blockWidth + (blocksInThisRow - 1) * 1;
                     let startCol = Math.floor((cols - totalWidth) / 2);
 
                     for (let b = 0; b < blocksInThisRow; b++) {
-                        let bc = startCol + b * 3; 
-                        targetIndices.push(r * cols + bc, r * cols + bc + 1, (r + 1) * cols + bc, (r + 1) * cols + bc + 1);
+                        let bc = startCol + b * (blockWidth + 1); 
+                        let slotsAdded = 0;
+                        for(let bh = 0; bh < blockHeight; bh++) {
+                            for(let bw = 0; bw < blockWidth; bw++) {
+                                if (slotsAdded < groupSize) {
+                                    targetIndices.push((r + bh) * cols + (bc + bw));
+                                    slotsAdded++;
+                                }
+                            }
+                        }
                         blockIndex++;
                     }
-                    r += 3;
+                    r += (blockHeight + 1);
                 }
             }
 
-            // Anwenden & Gruppieren
             studentCards.forEach((card, i) => {
-                card.dataset.group = groupId; // Alle markieren
+                card.dataset.group = groupId; 
                 if (i < targetIndices.length && cells[targetIndices[i]].children.length === 0) {
                     cells[targetIndices[i]].appendChild(card);
                 } else {
@@ -535,17 +623,136 @@
             });
         }
 
+        // --- EXPORT & IMPORT FUNCTIONALITY ---
+        function exportSitzplan() {
+            const rows = document.getElementById('gridRows').value;
+            const cols = document.getElementById('gridCols').value;
+            
+            const layoutCells = [];
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                const idx = cell.dataset.index;
+                const windowClasses = Array.from(cell.classList).filter(cls => cls.startsWith('is-window-'));
+                let cardData = null;
+                
+                if (cell.children.length > 0) {
+                    const card = cell.children[0];
+                    cardData = {
+                        id: card.id,
+                        type: card.dataset.type,
+                        text: card.innerText,
+                        group: card.dataset.group || null,
+                        imgSrc: card.querySelector('img')?.src || null
+                    };
+                }
+                if (windowClasses.length > 0 || cardData) {
+                    layoutCells.push({
+                        index: idx,
+                        windowClasses: windowClasses,
+                        card: cardData
+                    });
+                }
+            });
+
+            const exportData = {
+                rows,
+                cols,
+                students,
+                layoutCells
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "sitzplan_export.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importSitzplan(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.rows || !data.cols) {
+                        alert("Fehler: Ungültiges Dateiformat.");
+                        return;
+                    }
+                    document.getElementById('gridRows').value = data.rows;
+                    document.getElementById('gridCols').value = data.cols;
+                    students = data.students || [];
+                    
+                    sidebarList.innerHTML = '';
+                    students.forEach(s => {
+                        const div = document.createElement('div');
+                        div.classList.add('student-list-item');
+                        div.id = 'sidebar-' + s.id;
+                        div.innerHTML = `<span>${s.name}</span><button class="icon-btn" style="padding:2px 8px" onclick="removeStudent('${s.id}')">X</button>`;
+                        sidebarList.appendChild(div);
+                    });
+
+                    updateGridSize();
+                    
+                    const cells = document.querySelectorAll('.grid-cell');
+                    data.layoutCells.forEach(lc => {
+                        const cell = Array.from(cells).find(c => c.dataset.index == lc.index);
+                        if (cell) {
+                            if (lc.windowClasses) {
+                                lc.windowClasses.forEach(cls => cell.classList.add(cls));
+                            }
+                            if (lc.card) {
+                                const card = document.createElement('div');
+                                card.id = lc.card.id;
+                                card.dataset.type = lc.card.type;
+                                if (lc.card.group) card.dataset.group = lc.card.group;
+                                
+                                if (lc.card.type === 'student') {
+                                    card.classList.add('card', 'student-card');
+                                    card.draggable = true;
+                                    if (lc.card.imgSrc) {
+                                        const img = document.createElement('img');
+                                        img.src = lc.card.imgSrc;
+                                        card.appendChild(img);
+                                    }
+                                    const span = document.createElement('span');
+                                    span.innerText = lc.card.text;
+                                    card.appendChild(span);
+                                    card.addEventListener('dragstart', dragStart);
+                                    card.addEventListener('dragend', dragEnd);
+                                } else {
+                                    card.classList.add('card', 'room-card', lc.card.type);
+                                    card.draggable = true;
+                                    card.innerText = lc.card.text;
+                                    card.addEventListener('dragstart', dragStart);
+                                    card.addEventListener('dragend', dragEnd);
+                                }
+                                cell.appendChild(card);
+                            }
+                        }
+                    });
+                } catch(err) {
+                    alert("Fehler beim Importieren: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; 
+        }
+
         // --- UTILS ---
         function clearRoomElements() {
             document.querySelectorAll('.room-card').forEach(c => c.remove());
-            document.querySelectorAll('.is-window').forEach(c => c.classList.remove('is-window'));
-            document.querySelectorAll('.student-card').forEach(c => delete c.dataset.group); // Gruppierungen aufheben
+            document.querySelectorAll('.grid-cell').forEach(c => {
+                c.classList.remove('is-window-top', 'is-window-bottom', 'is-window-left', 'is-window-right');
+            });
+            document.querySelectorAll('.student-card').forEach(c => delete c.dataset.group); 
         }
 
         function randomizeSeats() {
             const studentCards = Array.from(document.querySelectorAll('.student-card'));
             const cells = Array.from(document.querySelectorAll('.grid-cell')).filter(c => c.children.length === 0 || c.children[0].dataset.type === 'student');
-            studentCards.forEach(c => { c.remove(); delete c.dataset.group; }); // Mischung löst Gruppen auf
+            studentCards.forEach(c => { c.remove(); delete c.dataset.group; }); 
             
             for (let i = studentCards.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
